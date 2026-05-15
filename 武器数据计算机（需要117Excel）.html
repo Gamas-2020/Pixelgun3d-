@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PG武器数据解析与搜索工具</title>
+    <!-- 图标 -->
+    <link rel="icon"
+        href="https://dlink.host/1drv/aHR0cHM6Ly8xZHJ2Lm1zL2kvYy8yZTE5ZjlkYTVhZTczYWQ1L0lRRGJRbnluM09zMFE1WlFweUpyaC1Hc0FXdmtqamZ2bnVGT0c5MmVuRXJ0NDYwP2U9OGhqUUNC.png"
+        type="image/png" sizes="128x128">
+    <!-- 样式 -->
+    <link
+        href="https://dlink.host/1drv/aHR0cHM6Ly8xZHJ2Lm1zL3UvYy8yZTE5ZjlkYTVhZTczYWQ1L0lRQ1hBbDdpaUtqSVFLRGJZS0E5UjgzcUFhYWotUU02aFV2bHJ2YW5qUl9XV2cwP2U9MW1JWGNI.css"
+        rel="stylesheet" type="text/css">
+    <!-- 引入 SheetJS 库，用于解析 Excel 文件 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+
+<body>
+
+    <!-- 旋转的PixelGun非秘密档案库 -->
+    <div style="position: absolute;left: 0%;top: 0%;z-index: 10;">
+        <img src="https://i0.hdslb.com/bfs/face/397956613b909091987f534a5d04dff11928b82a.jpg@128w_128h_1c_1s.webp"
+            id="PixelGun非秘密档案库" style="margin: 1vw;opacity: 0;width: 75%;height: 75%;border: 1vw;border-radius: 50%;"
+            alt="PixelGun非秘密档案库">
+    </div>
+
+    <div class="outer-container">
+
+        <div class="inner-container">
+            <header>
+                <h1 id="version">PG武器数据解析与搜索工具</h1>
+                <p class="subtitle">仅支持Excel文件,使用117的文档格式</p>
+            </header>
+
+            <div id="dataDisplay">
+                <div class="no-data">
+                    <p>请上传Excel文件</p>
+                </div>
+            </div>
+
+            <div class="status-bar">
+                <div id="rowCount">行数: 0</div>
+                <div id="status">就绪</div>
+            </div>
+
+            <div class="controls">
+                <div class="controls">
+                    <div class="search-container">
+                        <label for="search-box">搜索数据:<p>(多关键词用空格分隔)</p></label>
+                        <input type="text" id="search-box" placeholder="例如:主要 普通 乌兹 社会">
+                        <label for="delete-column">想保留的列，导入文件前输入:<p>(一般不输入)</p></label>
+                        <input type="text" id="delete-column" placeholder="1 2 3 4 5...(Excel列)">
+                    </div>
+
+                    <div class="file-container">
+                        <label for="fileInput">上传Excel文件:<p>(可以在群内下载)</p></label>
+                        <input type="file" id="fileInput" accept=".xlsx, .xls">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="weapon-select">武器选择(要计算的武器在此选择)</label>
+                        <select multiple id="weapon-select">
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="damage-calculator">
+                <h3 style="color: black;">伤害计算器</h3>
+                <div class="calculator-inputs">
+                    <div class="input-group">
+                        <label for="quality-select">武器品质</label>
+                        <select id="quality-select">
+                            <option value="神话">神话</option>
+                            <option value="传说">传说</option>
+                            <option value="史诗">史诗</option>
+                            <option value="稀有">稀有</option>
+                            <option value="普通" selected>普通</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="module-level">模块等级 (0-10)</label>
+                        <input type="number" id="module-level" min="0" max="10" value="0">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="teammate-buff">队友增伤光环(默认为1)</label>
+                        <input type="number" id="teammate-buff" min="0" max="100" value="1">
+                    </div>
+                </div>
+
+                <button id="toggle-curio" class="toggle-curio">显示饰品选择</button>
+
+                <div class="curio-section" id="curio-section">
+                    <h4>饰品选择</h4>
+
+                    <div class="curio-category">
+                        <h5>面具类(选一个)</h5>
+                        <div class="curio-grid">
+                            <div class="curio-item">
+                                <input type="radio" name="mask" id="mask-none" value="none" checked>
+                                <label for="mask-none">无</label>
+                            </div>
+                            <div class="curio-item">
+                                <input type="radio" name="mask" id="mask-veteran" value="老兵面具">
+                                <label for="mask-veteran">老兵面具 (0.07)</label>
+                            </div>
+                            <div class="curio-item">
+                                <input type="radio" name="mask" id="mask-pumpkin" value="南瓜面具">
+                                <label for="mask-pumpkin">南瓜面具 (0.07)</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="curio-category">
+                        <h5>帽子类(选一个)</h5>
+                        <div class="curio-grid">
+                            <div class="curio-item">
+                                <input type="radio" name="hat" id="hat-none" value="none" checked>
+                                <label for="hat-none">无</label>
+                            </div>
+                            <div class="curio-item">
+                                <input type="radio" name="hat" id="hat-firecap" value="燃烧的头饰">
+                                <label for="hat-firecap">燃烧的头饰 (0.07)</label>
+                            </div>
+                            <div class="curio-item">
+                                <input type="radio" name="hat" id="hat-bandit" value="土匪绷带">
+                                <label for="hat-bandit">土匪绷带 (0.07)</label>
+                            </div>
+                            <div class="curio-item">
+                                <input type="radio" name="hat" id="hat-serious" value="严肃者帽子">
+                                <label for="hat-serious">严肃者帽子 (0.03)</label>
+                            </div>
+                            <div class="curio-item">
+                                <input type="radio" name="hat" id="hat-samurai" value="大武士头盔">
+                                <label for="hat-samurai">大武士头盔 (0.03)</label>
+                            </div>
+                            <div class="curio-item">
+                                <input type="radio" name="hat" id="hat-crown" value="皇冠">
+                                <label for="hat-crown">皇冠 (0.05)</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="curio-category">
+                        <h5>鞋子类(选一个)</h5>
+                        <div class="curio-grid">
+                            <div class="curio-item">
+                                <input type="radio" name="shoes" id="shoes-none" value="none" checked>
+                                <label for="shoes-none">无</label>
+                            </div>
+                            <div class="curio-item">
+                                <input type="radio" name="shoes" id="shoes-dragon" value="黑龙靴子">
+                                <label for="shoes-dragon">黑龙靴子 (0.07)</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="curio-category">
+                        <h5>披风类(选一个)</h5>
+                        <div class="curio-grid">
+                            <div class="curio-item">
+                                <input type="radio" name="cloak" id="cloak-none" value="none" checked>
+                                <label for="cloak-none">无</label>
+                            </div>
+                            <div class="curio-item">
+                                <input type="radio" name="cloak" id="cloak-editor" value="披风编辑器">
+                                <label for="cloak-editor">披风编辑器 (0.05)</label>
+                            </div>
+                            <div class="curio-item">
+                                <input type="radio" name="cloak" id="cloak-screen" value="屏幕披风">
+                                <label for="cloak-screen">屏幕披风 (0.07)</label>
+                            </div>
+                            <div class="curio-item">
+                                <input type="radio" name="cloak" id="cloak-assault" value="冲锋兵斗篷2代">
+                                <label for="cloak-assault">冲锋兵斗篷2代 (0.07)</label>
+                            </div>
+                            <div class="curio-item">
+                                <input type="radio" name="cloak" id="cloak-chief" value="首领的斗篷">
+                                <label for="cloak-chief">首领的斗篷 (0.07)</label>
+                            </div>
+                            <div class="curio-item">
+                                <input type="radio" name="cloak" id="cloak-mobility" value="机动模块/pg英雄角">
+                                <label for="cloak-mobility">机动模块/pg英雄角 (0.03)</label>
+                            </div>
+                            <div class="curio-item">
+                                <input type="radio" name="cloak" id="cloak-ultimate" value="终极披风">
+                                <label for="cloak-ultimate">终极披风 (0.07)</label>
+                            </div>
+                            <div class="curio-item">
+                                <input type="radio" name="cloak" id="cloak-killer" value="杀手斗篷2代">
+                                <label for="cloak-killer">杀手斗篷2代 (0.07)</label>
+                            </div>
+                            <div class="curio-item">
+                                <input type="radio" name="cloak" id="cloak-magic" value="魔法礼物斗篷">
+                                <label for="cloak-magic">魔法礼物斗篷 (0.05)</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="curio-category">
+                        <h5>其他饰品</h5>
+                        <div class="curio-grid">
+                            <div class="curio-item">
+                                <input type="checkbox" id="cookie-cheerleader">
+                                <label for="cookie-cheerleader">曲奇啦啦队长 (0.05)</label>
+                            </div>
+                            <div class="curio-item">
+                                <input type="checkbox" id="blue-mode">
+                                <label for="blue-mode">蓝模增伤 (1.17)</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button id="calculate-btn" style="margin-top: 15px;">计算伤害</button>
+
+                <div class="calculator-result" id="calculatorResult"></div>
+            </div>
+
+            <footer>
+                <p>本工具仅供学习交流使用，请勿用于商业用途。</p>
+            </footer>
+        </div>
+    </div>
+
+    <!-- 代码 -->
+    <script
+        src="https://dlink.host/1drv/aHR0cHM6Ly8xZHJ2Lm1zL3UvYy8yZTE5ZjlkYTVhZTczYWQ1L0lRREUyYzhETnk3TVFhaklwQldRekUxa0FYcTVLSnF3dXBRYUF5cTlpTEYyWGhVP2U9RG10MW00.js"></script>
+</body>
